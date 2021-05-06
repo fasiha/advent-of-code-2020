@@ -39,17 +39,23 @@ fun problem1b(): Pair<Int, List<Int>>? {
     return null
 }
 
-fun problem2a(): Int? {
+fun problem2a(a: Boolean): Int? {
     val re = "([0-9]+)-([0-9]+) (.): (.+)".toRegex()
     fun isValid(lo: Int, hi: Int, ch: String, pw: String): Boolean {
         val count = ch.toRegex().findAll(pw).count()
         return count in lo..hi
     }
 
+    fun isValidB(i: Int, j: Int, ch: String, pw: String): Boolean {
+        return (pw[i - 1] == ch[0]).xor(pw[j - 1] == ch[0])
+    }
+
+    val valid = if (a) ::isValid else ::isValidB
+
     val contents = getResourceAsText("2.txt")
     if (contents != null) {
         return contents.trim().lineSequence().mapNotNull { re.find(it)?.destructured }
-            .filter { (lo, hi, ch, pw) -> isValid(lo.toInt(), hi.toInt(), ch, pw) }.count()
+            .filter { (lo, hi, ch, pw) -> valid(lo.toInt(), hi.toInt(), ch, pw) }.count()
     }
     return null
 }
@@ -57,6 +63,7 @@ fun problem2a(): Int? {
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
-    println("Problem 2a: ${problem2a()}")
+    println("Problem 2a: ${problem2a(true)}")
+    println("Problem 2b: ${problem2a(!true)}")
     println("Hello World!")
 }
