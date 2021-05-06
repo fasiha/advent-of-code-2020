@@ -54,10 +54,37 @@ fun problem2a(a: Boolean): Int? {
         .filter { (lo, hi, ch, pw) -> valid(lo.toInt(), hi.toInt(), ch, pw) }.count()
 }
 
+fun problem3a(right: Int, down: Int): Int {
+    val map = getResourceAsText("3.txt").trim().lines()
+    val width = map[0].length
+    val tree = '#'
+    var nTrees = 0
+    var row = 0
+    var col = 0
+    while (row < map.size) {
+        nTrees += if (map[row][col % width] == tree) 1 else 0
+        row += down
+        col += right
+    }
+    return nTrees
+}
+
+fun problem3b(): Long {
+    return listOf(
+        problem3a(1, 1),
+        problem3a(3, 1),
+        problem3a(5, 1),
+        problem3a(7, 1),
+        problem3a(1, 2)
+    ).fold(1L) { acc, i -> acc * i }
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
     println("Problem 2a: ${problem2a(true)}")
     println("Problem 2b: ${problem2a(!true)}")
+    println("Problem 3a: ${problem3a(3, 1)}")
+    println("Problem 3b: ${problem3b()}")
     println("Hello World!")
 }
