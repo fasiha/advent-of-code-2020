@@ -1,14 +1,11 @@
 // From https://stackoverflow.com/a/53018129
-fun getResourceAsText(path: String): String? {
-    return object {}.javaClass.getResource(path)?.readText()
+fun getResourceAsText(path: String): String {
+    return object {}.javaClass.getResource(path)?.readText() ?: throw Exception("Unable to read file")
 }
 
 fun getResourceAsInts(path: String): List<Int> {
     val contents = getResourceAsText(path);
-    if (contents != null) {
-        return contents.trim().lines().map { it.toInt() }
-    }
-    throw Exception("File not found")
+    return contents.trim().lines().map { it.toInt() }
 }
 
 fun problem1a(): Pair<Int, List<Int>>? {
@@ -53,11 +50,8 @@ fun problem2a(a: Boolean): Int? {
     val valid = if (a) ::isValid else ::isValidB
 
     val contents = getResourceAsText("2.txt")
-    if (contents != null) {
-        return contents.trim().lineSequence().mapNotNull { re.find(it)?.destructured }
-            .filter { (lo, hi, ch, pw) -> valid(lo.toInt(), hi.toInt(), ch, pw) }.count()
-    }
-    return null
+    return contents.trim().lineSequence().mapNotNull { re.find(it)?.destructured }
+        .filter { (lo, hi, ch, pw) -> valid(lo.toInt(), hi.toInt(), ch, pw) }.count()
 }
 
 fun main(args: Array<String>) {
