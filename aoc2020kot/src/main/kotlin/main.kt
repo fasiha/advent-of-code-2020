@@ -122,6 +122,18 @@ fun problem4b(): Int {
 
 }
 
+fun strToBinary(s: String, zeroChar: Char): Int {
+    return s.toCharArray().fold(0) { acc, i -> (acc shl 1) + if (i == zeroChar) 0 else 1 }
+    // Does toCharArray *create* a new array? Or is it a view?
+    // Because, an alternative: `chars` returns IntSequence, so
+    // return s.chars().map{if (it == zeroChar.toInt()) 0 else 1}.reduce{ acc, i -> (acc shl 1) + i }.asInt
+}
+
+fun problem5a(): Int {
+    val lines = getResourceAsText("5.txt").trim().lineSequence()
+    return lines.maxOfOrNull { strToBinary(it.take(7), 'F') * 8 + strToBinary(it.takeLast(3), 'L') }!!
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -131,4 +143,5 @@ fun main(args: Array<String>) {
     println("Problem 3b: ${problem3b()}")
     println("Problem 4a: ${problem4a()}")
     println("Problem 4b: ${problem4b()}")
+    println("Problem 5a: ${problem5a()}")
 }
