@@ -79,6 +79,49 @@ fun problem3b(): Long {
     ).fold(1L) { acc, i -> acc * i }
 }
 
+fun problem4a(): Int {
+    val contents = getResourceAsText("4.txt").trim().splitToSequence("\n\n")
+    val listOfKeys = contents.map {
+        it
+            .split("\\s".toRegex())
+            .map { kv -> kv.splitToSequence(':').first() }
+            .toSet()
+    }
+    return listOfKeys.count { it.containsAll(listOf("byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid")) }
+}
+
+fun <T> listToPair(l: List<T>): Pair<T, T> {
+    return Pair(l[0], l[1])
+}
+
+fun problem4b(): Int {
+    val requiredFields = listOf("byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid")
+    val okEyeColors = setOf("amb", "blu", "brn", "gry", "grn", "hzl", "oth")
+
+    val contents = getResourceAsText("4.txt").trim().splitToSequence("\n\n")
+    val passports = contents.map {
+        it
+            .split("\\s".toRegex())
+            .associate { kv -> listToPair(kv.split(":")) }
+    }
+    val validPassports = passports.filter { requiredFields.all { k -> it.containsKey(k) } }
+
+    fun isValid(m: Map<String, String>): Boolean {
+        val hgt = m["hgt"]!!
+        val hgtOk = (hgt.endsWith("cm") && hgt.dropLast(2).toInt() in 150..193) ||
+                (hgt.endsWith("in") && hgt.dropLast(2).toInt() in 59..76)
+        return hgtOk &&
+                (m["byr"]?.toInt() in 1920..2002) &&
+                (m["iyr"]?.toInt() in 2010..2020) &&
+                (m["eyr"]?.toInt() in 2020..2030) &&
+                (m["hcl"]!!.contains("^#[a-f0-9]{6}$".toRegex())) &&
+                (okEyeColors.contains(m["ecl"]!!)) &&
+                (m["pid"]!!.contains("^[0-9]{9}$".toRegex()))
+    }
+    return validPassports.count(::isValid)
+
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -86,5 +129,6 @@ fun main(args: Array<String>) {
     println("Problem 2b: ${problem2a(!true)}")
     println("Problem 3a: ${problem3a(3, 1)}")
     println("Problem 3b: ${problem3b()}")
-    println("Hello World!")
+    println("Problem 4a: ${problem4a()}")
+    println("Problem 4b: ${problem4b()}")
 }
