@@ -134,6 +134,15 @@ fun problem5a(): Int {
     return lines.maxOfOrNull { strToBinary(it.take(7), 'F') * 8 + strToBinary(it.takeLast(3), 'L') }!!
 }
 
+fun problem5b(): Int {
+    val lines = getResourceAsText("5.txt").trim().lineSequence()
+    val sorted = lines.map { strToBinary(it.take(7), 'F') * 8 + strToBinary(it.takeLast(3), 'L') }.sorted()
+    for ((curr, next) in sorted.zipWithNext()) {
+        if (curr + 1 != next) return curr + 1
+    }
+    return -1
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -144,4 +153,5 @@ fun main(args: Array<String>) {
     println("Problem 4a: ${problem4a()}")
     println("Problem 4b: ${problem4b()}")
     println("Problem 5a: ${problem5a()}")
+    println("Problem 5b: ${problem5b()}")
 }
