@@ -143,6 +143,21 @@ fun problem5b(): Int {
     return -1
 }
 
+fun problem6a(): Int {
+    val groups = getResourceAsText("6.txt").trim().splitToSequence("\n\n")
+    return groups.sumOf { it.replace("\n", "").toSet().size }
+}
+
+fun problem6b(): Int {
+    val groups = getResourceAsText("6.txt").trim().splitToSequence("\n\n")
+    return groups.sumOf {
+        it.splitToSequence("\n")
+            .map { person -> person.toSet() }
+            .reduce { acc, i -> acc intersect i }
+            .size
+    }
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -154,4 +169,6 @@ fun main(args: Array<String>) {
     println("Problem 4b: ${problem4b()}")
     println("Problem 5a: ${problem5a()}")
     println("Problem 5b: ${problem5b()}")
+    println("Problem 6a: ${problem6a()}")
+    println("Problem 6b: ${problem6b()}")
 }
