@@ -4,14 +4,15 @@ fun getResourceAsText(path: String): String {
 }
 
 fun getResourceAsInts(path: String): List<Int> {
-    val contents = getResourceAsText(path);
-    return contents.trim().lines().map { it.toInt() }
+    return getResourceAsText(path).trim().lines().map { it.toInt() }
 }
 
-fun problem1a(): Pair<Int, List<Int>>? {
-    val targetSum = 2020
-    val expenses = getResourceAsInts("1.txt")
-    val seen: MutableSet<Int> = mutableSetOf()
+fun getResourceAsLongs(path: String): List<Long> {
+    return getResourceAsText(path).trim().lines().map { it.toLong() }
+}
+
+fun problem1a(expenses: List<Long> = getResourceAsLongs("1.txt"), targetSum: Long = 2020): Pair<Long, List<Long>>? {
+    val seen: MutableSet<Long> = mutableSetOf()
     for (x in expenses) {
         if (seen.contains(targetSum - x)) {
             return Pair((targetSum - x) * x, listOf(targetSum - x, x))
@@ -260,6 +261,17 @@ fun problem8b(): Int {
     }
     throw Error("no solution found")
 }
+// Kotlin Sad 1: no nested destructure
+// 2: windowed returns a List of Lists? No Sequence? Is that inefficient?
+
+fun problem9a(): Long {
+    val preamble = 25
+    val numbers = getResourceAsLongs("9.txt")
+    return numbers
+        .windowed(1 + preamble)
+        .first { problem1a(it.dropLast(1), it.last()) == null }
+        .last()
+}
 
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
@@ -278,4 +290,5 @@ fun main(args: Array<String>) {
     println("Problem 7b: ${problem7b()}")
     println("Problem 8a: ${problem8a()}")
     println("Problem 8b: ${problem8b()}")
+    println("Problem 9a: ${problem9a()}")
 }
