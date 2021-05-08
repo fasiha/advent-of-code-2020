@@ -177,7 +177,34 @@ fun problem7a(): Pair<Int, MutableSet<String>> {
 
     recur("shiny gold")
     return Pair(ancestors.size, ancestors)
+}
 
+data class BagContent(val num: Int, val color: String)
+
+fun problem7b(): Int {
+    fun outerToInners(rule: String): Pair<String, List<BagContent>> {
+        val split = rule.split(" bags contain")
+        assert(split.size >= 2) { "two sides to the rule expected" }
+        val parent = split[0] // don't need null check? Guess not. Either this will throw or the assert above
+        return Pair(
+            parent,
+            "([0-9]+) ([a-z ]+?) bag"
+                .toRegex()
+                .findAll(split[1])
+                .map { BagContent(it.destructured.component1().toInt(), it.destructured.component2()) }
+                .toList()
+        )
+    }
+
+    val outerToInners =
+        getResourceAsText("7.txt").trim().lineSequence().associate(::outerToInners)
+
+    fun recur(outer: String, total: Int = 0): Int {
+        val inners = outerToInners[outer].orEmpty()
+        return total + inners.sumOf { it.num + it.num * recur(it.color) }
+    }
+
+    return recur("shiny gold")
 }
 
 fun main(args: Array<String>) {
@@ -194,4 +221,5 @@ fun main(args: Array<String>) {
     println("Problem 6a: ${problem6a()}")
     println("Problem 6b: ${problem6b()}")
     println("Problem 7a: ${problem7a()}")
+    println("Problem 7b: ${problem7b()}")
 }
