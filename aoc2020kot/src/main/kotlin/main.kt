@@ -37,7 +37,7 @@ fun problem1b(): Pair<Int, List<Int>>? {
     return null
 }
 
-fun problem2a(a: Boolean): Int? {
+fun problem2a(a: Boolean): Int {
     val re = "([0-9]+)-([0-9]+) (.): (.+)".toRegex()
     fun isValid(lo: Int, hi: Int, ch: String, pw: String): Boolean {
         val count = ch.toRegex().findAll(pw).count()
@@ -169,7 +169,7 @@ fun problem7a(): Pair<Int, MutableSet<String>> {
     val innerToOuters =
         getResourceAsText("7.txt").trim().lineSequence().flatMap(::outerToInner).groupBy({ it.second }, { it.first })
 
-    val ancestors: MutableSet<String> = mutableSetOf<String>()
+    val ancestors: MutableSet<String> = mutableSetOf()
     fun recur(inner: String) {
         val outers = innerToOuters[inner].orEmpty()
         ancestors += outers
@@ -264,14 +264,24 @@ fun problem8b(): Int {
 // Kotlin Sad 1: no nested destructure
 // 2: windowed returns a List of Lists? No Sequence? Is that inefficient?
 // Question: is List.asSequence() expensive?
+// Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there
 
-fun problem9a(): Long {
+fun problem9a(numbers: Sequence<Long> = getResourceAsLongs("9.txt")): Long {
     val preamble = 25
-    val numbers = getResourceAsLongs("9.txt")
     return numbers
         .windowed(1 + preamble)
         .first { problem1a(it.dropLast(1).asSequence(), it.last()) == null }
         .last()
+}
+
+fun problem9b(): Long {
+    val numbers = getResourceAsLongs("9.txt").toList()
+    val target = problem9a(numbers.asSequence()) // is this stupid, going from seq -> list -> seq?
+    for (win in 2..numbers.size) {
+        val solution = numbers.windowed(win).firstOrNull { it.sum() == target }
+        if(solution!=null) return solution.maxOrNull()!! + solution.minOrNull()!!
+    }
+    error("unable to find solution")
 }
 
 fun main(args: Array<String>) {
@@ -292,4 +302,5 @@ fun main(args: Array<String>) {
     println("Problem 8a: ${problem8a()}")
     println("Problem 8b: ${problem8b()}")
     println("Problem 9a: ${problem9a()}")
+    println("Problem 9b: ${problem9b()}")
 }
