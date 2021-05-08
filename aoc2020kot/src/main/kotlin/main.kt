@@ -158,6 +158,28 @@ fun problem6b(): Int {
     }
 }
 
+fun problem7a(): Pair<Int, MutableSet<String>> {
+    fun outerToInner(rule: String): Sequence<Pair<String, String>> {
+        val split = rule.split(" bags contain")
+        val parent = split[0] // don't need null check?
+        return "[0-9]+ ([a-z ]+?) bag".toRegex().findAll(split[1]).map { Pair(parent, it.destructured.component1()) }
+    }
+
+    val innerToOuters =
+        getResourceAsText("7.txt").trim().lineSequence().flatMap(::outerToInner).groupBy({ it.second }, { it.first })
+
+    val ancestors: MutableSet<String> = mutableSetOf<String>()
+    fun recur(inner: String) {
+        val outers = innerToOuters[inner].orEmpty()
+        ancestors += outers
+        outers.forEach(::recur)
+    }
+
+    recur("shiny gold")
+    return Pair(ancestors.size, ancestors)
+
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -171,4 +193,5 @@ fun main(args: Array<String>) {
     println("Problem 5b: ${problem5b()}")
     println("Problem 6a: ${problem6a()}")
     println("Problem 6b: ${problem6b()}")
+    println("Problem 7a: ${problem7a()}")
 }
