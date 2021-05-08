@@ -210,8 +210,8 @@ fun problem7b(): Int {
 enum class Op { Acc, Jmp, Nop }
 data class OpCode(val op: Op, val arg: Int)
 
-fun problem8a(): Int {
-    val program = getResourceAsText("8.txt").trim().lines().map {
+fun loadProgram8(): List<OpCode> {
+    return getResourceAsText("8.txt").trim().lines().map {
         val (op, arg) = it.split(" ")
         OpCode(
             when (op) {
@@ -223,16 +223,17 @@ fun problem8a(): Int {
             arg.toInt()
         )
     }
+}
 
+enum class FinalState { Terminated, InfiniteLoop }
+
+fun problem8a(program: List<OpCode> = loadProgram8()): Pair<FinalState, Int> {
     val linesVisited = mutableSetOf<Int>()
     var programCounter = 0
     var acc = 0
-    while (true) {
-        if (linesVisited.contains(programCounter)) {
-            return acc
-        } else {
-            linesVisited.add(programCounter)
-        }
+    while (programCounter < program.size) {
+        if (linesVisited.contains(programCounter)) return Pair(FinalState.InfiniteLoop, acc)
+        else linesVisited.add(programCounter)
 
         val (op, arg) = program[programCounter]
         when (op) {
@@ -244,6 +245,20 @@ fun problem8a(): Int {
             Op.Nop -> programCounter++
         }
     }
+    return Pair(FinalState.Terminated, acc)
+}
+
+fun problem8b(): Int {
+    val program = loadProgram8()
+    for ((idx, op) in program.withIndex()) {
+        if (op.op == Op.Nop || op.op == Op.Jmp) {
+            val newProgram = program.toMutableList()
+            newProgram[idx] = OpCode(if (op.op == Op.Nop) Op.Jmp else Op.Nop, op.arg)
+            val (newState, newAcc) = problem8a(newProgram)
+            if (newState == FinalState.Terminated) return newAcc
+        }
+    }
+    throw Error("no solution found")
 }
 
 fun main(args: Array<String>) {
@@ -262,4 +277,5 @@ fun main(args: Array<String>) {
     println("Problem 7a: ${problem7a()}")
     println("Problem 7b: ${problem7b()}")
     println("Problem 8a: ${problem8a()}")
+    println("Problem 8b: ${problem8b()}")
 }
