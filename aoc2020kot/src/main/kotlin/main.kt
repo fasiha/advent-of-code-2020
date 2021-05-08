@@ -279,9 +279,20 @@ fun problem9b(): Long {
     val target = problem9a(numbers.asSequence()) // is this stupid, going from seq -> list -> seq?
     for (win in 2..numbers.size) {
         val solution = numbers.windowed(win).firstOrNull { it.sum() == target }
-        if(solution!=null) return solution.maxOrNull()!! + solution.minOrNull()!!
+        if (solution != null) return solution.maxOrNull()!! + solution.minOrNull()!!
     }
     error("unable to find solution")
+}
+
+fun problem10a(): Int {
+    return getResourceAsInts("10.txt")
+        .sorted()
+        .zipWithNext { a, b -> b - a }
+        .groupingBy { it }
+        .eachCount()
+        .values
+        .map { it + 1 }
+        .reduce { acc, it -> acc * it }
 }
 
 fun main(args: Array<String>) {
@@ -303,4 +314,5 @@ fun main(args: Array<String>) {
     println("Problem 8b: ${problem8b()}")
     println("Problem 9a: ${problem9a()}")
     println("Problem 9b: ${problem9b()}")
+    println("Problem 10a: ${problem10a()}")
 }
