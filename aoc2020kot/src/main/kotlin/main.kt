@@ -207,6 +207,45 @@ fun problem7b(): Int {
     return recur("shiny gold")
 }
 
+enum class Op { Acc, Jmp, Nop }
+data class OpCode(val op: Op, val arg: Int)
+
+fun problem8a(): Int {
+    val program = getResourceAsText("8.txt").trim().lines().map {
+        val (op, arg) = it.split(" ")
+        OpCode(
+            when (op) {
+                "nop" -> Op.Nop
+                "acc" -> Op.Acc
+                "jmp" -> Op.Jmp
+                else -> throw Error("unknown")
+            },
+            arg.toInt()
+        )
+    }
+
+    val linesVisited = mutableSetOf<Int>()
+    var programCounter = 0
+    var acc = 0
+    while (true) {
+        if (linesVisited.contains(programCounter)) {
+            return acc
+        } else {
+            linesVisited.add(programCounter)
+        }
+
+        val (op, arg) = program[programCounter]
+        when (op) {
+            Op.Acc -> {
+                acc += arg
+                programCounter++
+            }
+            Op.Jmp -> programCounter += arg
+            Op.Nop -> programCounter++
+        }
+    }
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -222,4 +261,5 @@ fun main(args: Array<String>) {
     println("Problem 6b: ${problem6b()}")
     println("Problem 7a: ${problem7a()}")
     println("Problem 7b: ${problem7b()}")
+    println("Problem 8a: ${problem8a()}")
 }
