@@ -200,9 +200,9 @@ fun problem7b(): Int {
     val outerToInners =
         getResourceAsText("7.txt").trim().lineSequence().associate(::outerToInners)
 
-    fun recur(outer: String, total: Int = 0): Int {
+    fun recur(outer: String): Int {
         val inners = outerToInners[outer].orEmpty()
-        return total + inners.sumOf { it.num + it.num * recur(it.color) }
+        return inners.sumOf { it.num + it.num * recur(it.color) }
     }
 
     return recur("shiny gold")
@@ -264,7 +264,7 @@ fun problem8b(): Int {
 // Kotlin Sad 1: no nested destructure
 // 2: windowed returns a List of Lists? No Sequence? Is that inefficient?
 // Question: is List.asSequence() expensive?
-// Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there
+// Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there. Similarly `if(m.containsKey(idx)) return m[idx]!!`
 
 fun problem9a(numbers: Sequence<Long> = getResourceAsLongs("9.txt")): Long {
     val preamble = 25
@@ -291,8 +291,25 @@ fun problem10a(): Int {
         .groupingBy { it }
         .eachCount()
         .values
-        .map { it + 1 }
-        .reduce { acc, it -> acc * it }
+        .fold(1) { acc, it -> acc * (it + 1) }
+}
+
+fun problem10b(): Long {
+
+    val list0 = listOf(0) + getResourceAsInts("10.txt").sorted()
+    val list = list0 + (list0.last() + 3)
+
+    val m = mutableMapOf<Int, Long>()
+    fun recur(idx: Int = 0): Long {
+        if (idx + 1 == list.size) return 1
+        if (m.containsKey(idx)) return m[idx]!!
+        val cur = list[idx]
+        val next = list.drop(idx + 1).takeWhile { it <= cur + 3 } // subList?
+        val numDescendants = next.mapIndexed { i, _ -> recur(idx + i + 1) }.sum()
+        m += idx to numDescendants
+        return numDescendants
+    }
+    return recur()
 }
 
 fun main(args: Array<String>) {
@@ -315,4 +332,5 @@ fun main(args: Array<String>) {
     println("Problem 9a: ${problem9a()}")
     println("Problem 9b: ${problem9b()}")
     println("Problem 10a: ${problem10a()}")
+    println("Problem 10b: ${problem10b()}")
 }
