@@ -265,6 +265,7 @@ fun problem8b(): Int {
 // 2: windowed returns a List of Lists? No Sequence? Is that inefficient?
 // Question: is List.asSequence() expensive?
 // Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there. Similarly `if(m.containsKey(idx)) return m[idx]!!`
+// subList does bound-checking. I miss python lst[5:1000000] would just work
 
 fun problem9a(numbers: Sequence<Long> = getResourceAsLongs("9.txt")): Long {
     val preamble = 25
@@ -304,8 +305,8 @@ fun problem10b(): Long {
         if (idx + 1 == list.size) return 1
         if (m.containsKey(idx)) return m[idx]!!
         val cur = list[idx]
-        val next = list.drop(idx + 1).takeWhile { it <= cur + 3 } // subList?
-        val numDescendants = next.mapIndexed { i, _ -> recur(idx + i + 1) }.sum()
+        val next = list.drop(idx + 1).takeWhile { it <= cur + 3 }.size // drop->takeWhile since subList checks bounds
+        val numDescendants = (idx + 1..idx + next).sumOf(::recur)
         m += idx to numDescendants
         return numDescendants
     }
