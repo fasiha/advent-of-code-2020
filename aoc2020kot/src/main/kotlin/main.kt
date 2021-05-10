@@ -3,6 +3,10 @@ fun getResourceAsText(path: String): String {
     return object {}.javaClass.getResource(path)?.readText() ?: throw Exception("Unable to read file")
 }
 
+fun getResourceAsBytes(path: String): ByteArray {
+    return object {}.javaClass.getResource(path)?.readBytes() ?: throw Exception("Unable to read file")
+}
+
 fun getResourceAsInts(path: String): Sequence<Int> {
     return getResourceAsText(path).trim().lineSequence().map { it.toInt() }
 }
@@ -296,7 +300,6 @@ fun problem10a(): Int {
 }
 
 fun problem10b(): Long {
-
     val list0 = listOf(0) + getResourceAsInts("10.txt").sorted()
     val list = list0 + (list0.last() + 3)
 
@@ -305,12 +308,90 @@ fun problem10b(): Long {
         if (idx + 1 == list.size) return 1
         if (m.containsKey(idx)) return m[idx]!!
         val cur = list[idx]
-        val next = list.drop(idx + 1).takeWhile { it <= cur + 3 }.size // drop->takeWhile since subList checks bounds
+        val next = list.drop(idx + 1).takeWhile { it <= cur + 3 }.size // drop & takeWhile since subList checks bounds
         val numDescendants = (idx + 1..idx + next).sumOf(::recur)
         m += idx to numDescendants
         return numDescendants
     }
     return recur()
+}
+
+data class DoubleBuffer(
+    val get: (Int, Int) -> Byte,
+    val set: (Int, Int, Byte) -> Unit,
+    val flip: () -> Unit,
+    val getBuffer: () -> ByteArray,
+    val getRing: (Int, Int) -> List<Byte>,
+    val height: Int,
+    val width: Int,
+)
+
+fun prepareBytes(aBuffer: ByteArray): DoubleBuffer {
+    // FIXME: BOM 0xEF,0xBB,0xBF https://en.wikipedia.org/wiki/Byte_order_mark
+    val newline = aBuffer.indexOf('\n'.toByte())
+    assert(newline > 0) { "file must contain newlines" }
+    val (width, padding) = when (aBuffer[newline - 1]) {
+        '\r'.toByte() -> Pair(newline - 1, 2)
+        else -> Pair(newline, 1)
+    }
+    val lastIdx = aBuffer.indexOfLast { !(it == '\n'.toByte() || it == '\r'.toByte()) } + 1
+    val height = (lastIdx + padding) / (width + padding)
+
+    val bBuffer = aBuffer.copyOf()
+
+    var readBufferA = true // which buffer, a or b, is the read-ready copy? The other will be written to until flip()ed
+
+    val rowColToIndex = { row: Int, col: Int -> row * (width + padding) + col }
+    val get = { row: Int, col: Int -> (if (readBufferA) aBuffer else bBuffer)[rowColToIndex(row, col)] }
+    val set = { row: Int, col: Int, new: Byte ->
+        (if (readBufferA) bBuffer else aBuffer)[rowColToIndex(row, col)] = new
+    }
+    val flip = { readBufferA = !readBufferA }
+    val getBuffer = { if (readBufferA) aBuffer else bBuffer }
+    val getRing = { row: Int, col: Int ->
+        val buf = if (readBufferA) aBuffer else bBuffer
+        val left = maxOf(col - 1, 0)
+        val right = minOf(col + 1, width - 1)
+        val top = maxOf(row - 1, 0)
+        val bottom = minOf(row + 1, height - 1)
+        (top..bottom).flatMap { r ->
+            (left..right).mapNotNull { c ->
+                if (row == r && col == c) null else buf[rowColToIndex(
+                    r,
+                    c
+                )]
+            }
+        }
+    }
+    return DoubleBuffer(get, set, flip, getBuffer, getRing, height, width)
+}
+
+fun problem11a(): Int {
+    val buffer = prepareBytes(getResourceAsBytes("11.txt"))
+    while (true) {
+        var changed = false
+        for (row in 0 until buffer.height) {
+            for (col in 0 until buffer.width) {
+                val seat = buffer.get(row, col)
+                if (seat != '.'.toByte()) {
+                    val ring = buffer.getRing(row, col)
+                    val occupied = ring.count { it == '#'.toByte() }
+                    if (seat == 'L'.toByte() && occupied == 0) {
+                        buffer.set(row, col, '#'.toByte())
+                        changed = true
+                    } else if (seat == '#'.toByte() && occupied >= 4) {
+                        buffer.set(row, col, 'L'.toByte())
+                        changed = true
+                    } else {
+                        buffer.set(row, col, seat)
+                    }
+                }
+            }
+        }
+        buffer.flip() // all done reading from one buffer and writing to the other: flip which one is readable
+        if (!changed) break
+    }
+    return buffer.getBuffer().count { it == '#'.toByte() }
 }
 
 fun main(args: Array<String>) {
@@ -334,4 +415,5 @@ fun main(args: Array<String>) {
     println("Problem 9b: ${problem9b()}")
     println("Problem 10a: ${problem10a()}")
     println("Problem 10b: ${problem10b()}")
+    println("Problem 11a: ${problem11a()}")
 }
