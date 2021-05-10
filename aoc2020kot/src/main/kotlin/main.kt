@@ -403,6 +403,65 @@ fun problem11(partA: Boolean): Int {
     return buffer.getBuffer().count { it == '#'.toByte() }
 }
 
+fun bytesToLinesSequence(bytes: ByteArray): Sequence<ByteArray> {
+    return sequence {
+        val lineFeed = '\n'.toByte()
+        val carriageReturn = '\r'.toByte()
+
+        var newlineSize = 1 // unix
+        var slice = bytes.sliceArray(bytes.indices)
+
+        val searchIdx = slice.indexOf(lineFeed)
+        if (searchIdx < 0) {
+            yield(slice)
+        } else {
+            if (searchIdx > 0 && slice[searchIdx - 1] == carriageReturn) newlineSize = 2 // Windows
+            yield(slice.sliceArray(0..searchIdx - newlineSize))
+            slice = slice.sliceArray(searchIdx + 1 until slice.size)
+
+            while (slice.isNotEmpty()) {
+                val searchIdx = slice.indexOf(lineFeed)
+                if (searchIdx < 0) {
+                    yield(slice)
+                    break
+                }
+                yield(slice.sliceArray(0..searchIdx - newlineSize))
+                slice = slice.sliceArray(searchIdx + 1 until slice.size)
+            }
+        }
+    }
+}
+
+//enum class Compass(val i:Int) {N(0), E(1), S(2), W(3)}
+fun prob12(): Int {
+    val faceToDelta = mapOf('N' to Pair(0, 1), 'S' to Pair(0, -1), 'E' to Pair(1, 0), 'W' to Pair(-1, 0))
+    val faces = listOf('N', 'E', 'S', 'W')
+
+    var x = 0
+    var y = 0
+    var faceIdx = faces.indexOf('E')
+    for (line in bytesToLinesSequence(getResourceAsBytes("12.txt"))) {
+        val instruction = line[0].toChar()
+        val arg = String(line.sliceArray(1 until line.size), Charsets.US_ASCII).toInt()
+        // print("($x, $y; ${faces[faceIdx]}) -> ${String(line)} -> ")
+        when (instruction) {
+            'N' -> y += arg
+            'S' -> y -= arg
+            'W' -> x -= arg
+            'E' -> x += arg
+            'L' -> faceIdx = (4 + faceIdx - arg / 90) % 4
+            'R' -> faceIdx = (4 + faceIdx + arg / 90) % 4
+            'F' -> {
+                val (dx, dy) = faceToDelta[faces[faceIdx]]!!
+                x += dx * arg
+                y += dy * arg
+            }
+        }
+        println("($x, $y; ${faces[faceIdx]})")
+    }
+    return kotlin.math.abs(x) + kotlin.math.abs(y)
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -424,6 +483,7 @@ fun main(args: Array<String>) {
     println("Problem 9b: ${problem9b()}")
     println("Problem 10a: ${problem10a()}")
     println("Problem 10b: ${problem10b()}")
-    println("Problem 11a: ${problem11(true)}")
-    println("Problem 11b: ${problem11(false)}")
+//    println("Problem 11a: ${problem11(true)}")
+//    println("Problem 11b: ${problem11(false)}")
+    println("Problem 12a: ${prob12()}")
 }
