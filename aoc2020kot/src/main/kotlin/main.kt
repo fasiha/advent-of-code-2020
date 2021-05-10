@@ -163,7 +163,7 @@ fun problem6b(): Int {
     }
 }
 
-fun problem7a(): Pair<Int, MutableSet<String>> {
+fun problem7a(): Int {
     fun outerToInner(rule: String): Sequence<Pair<String, String>> {
         val split = rule.split(" bags contain")
         val parent = split[0] // don't need null check?
@@ -181,7 +181,7 @@ fun problem7a(): Pair<Int, MutableSet<String>> {
     }
 
     recur("shiny gold")
-    return Pair(ancestors.size, ancestors)
+    return ancestors.size
 }
 
 data class BagContent(val num: Int, val color: String)
@@ -432,7 +432,6 @@ fun bytesToLinesSequence(bytes: ByteArray): Sequence<ByteArray> {
     }
 }
 
-//enum class Compass(val i:Int) {N(0), E(1), S(2), W(3)}
 fun prob12(): Int {
     val faceToDelta = mapOf('N' to Pair(0, 1), 'S' to Pair(0, -1), 'E' to Pair(1, 0), 'W' to Pair(-1, 0))
     val faces = listOf('N', 'E', 'S', 'W')
@@ -443,7 +442,6 @@ fun prob12(): Int {
     for (line in bytesToLinesSequence(getResourceAsBytes("12.txt"))) {
         val instruction = line[0].toChar()
         val arg = String(line.sliceArray(1 until line.size), Charsets.US_ASCII).toInt()
-        // print("($x, $y; ${faces[faceIdx]}) -> ${String(line)} -> ")
         when (instruction) {
             'N' -> y += arg
             'S' -> y -= arg
@@ -457,7 +455,6 @@ fun prob12(): Int {
                 y += dy * arg
             }
         }
-        println("($x, $y; ${faces[faceIdx]})")
     }
     return kotlin.math.abs(x) + kotlin.math.abs(y)
 }
