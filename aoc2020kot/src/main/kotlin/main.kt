@@ -322,6 +322,7 @@ data class DoubleBuffer(
     val flip: () -> Unit,
     val getBuffer: () -> ByteArray,
     val getRing: (Int, Int) -> List<Byte>,
+    val getLineOfSight: (Int, Int, (Byte) -> Boolean) -> List<Byte>,
     val height: Int,
     val width: Int,
 )
@@ -363,7 +364,29 @@ fun prepareBytes(aBuffer: ByteArray): DoubleBuffer {
             }
         }
     }
-    return DoubleBuffer(get, set, flip, getBuffer, getRing, height, width)
+    val getLineOfSight = { row: Int, col: Int, f: (Byte) -> Boolean ->
+        val inBounds = { r: Int, c: Int -> r >= 0 && c >= 0 && r < height && c < width }
+        val buf = if (readBufferA) aBuffer else bBuffer
+        val ret = mutableListOf<Byte>()
+        for (dr in -1..1) {
+            for (dc in -1..1) {
+                if (dc == 0 && dr == 0) continue
+                var r = row + dr
+                var c = col + dc
+                while (inBounds(r, c)) {
+                    val char = buf[rowColToIndex(r, c)]
+                    if (f(char)) {
+                        ret += char
+                        break
+                    }
+                    c += dc
+                    r += dr
+                }
+            }
+        }
+        ret
+    }
+    return DoubleBuffer(get, set, flip, getBuffer, getRing, getLineOfSight, height, width)
 }
 
 fun problem11a(): Int {
@@ -380,6 +403,34 @@ fun problem11a(): Int {
                         buffer.set(row, col, '#'.toByte())
                         changed = true
                     } else if (seat == '#'.toByte() && occupied >= 4) {
+                        buffer.set(row, col, 'L'.toByte())
+                        changed = true
+                    } else {
+                        buffer.set(row, col, seat)
+                    }
+                }
+            }
+        }
+        buffer.flip() // all done reading from one buffer and writing to the other: flip which one is readable
+        if (!changed) break
+    }
+    return buffer.getBuffer().count { it == '#'.toByte() }
+}
+
+fun problem11b(): Int {
+    val buffer = prepareBytes(getResourceAsBytes("11.txt"))
+    while (true) {
+        var changed = false
+        for (row in 0 until buffer.height) {
+            for (col in 0 until buffer.width) {
+                val seat = buffer.get(row, col)
+                if (seat != '.'.toByte()) {
+                    val ring = buffer.getLineOfSight(row, col) { b -> b != '.'.toByte() }
+                    val occupied = ring.count { it == '#'.toByte() }
+                    if (seat == 'L'.toByte() && occupied == 0) {
+                        buffer.set(row, col, '#'.toByte())
+                        changed = true
+                    } else if (seat == '#'.toByte() && occupied >= 5) {
                         buffer.set(row, col, 'L'.toByte())
                         changed = true
                     } else {
@@ -416,4 +467,5 @@ fun main(args: Array<String>) {
     println("Problem 10a: ${problem10a()}")
     println("Problem 10b: ${problem10b()}")
     println("Problem 11a: ${problem11a()}")
+    println("Problem 11b: ${problem11b()}")
 }
