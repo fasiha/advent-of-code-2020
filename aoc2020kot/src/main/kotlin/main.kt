@@ -321,7 +321,6 @@ data class DoubleBuffer(
     val set: (Int, Int, Byte) -> Unit,
     val flip: () -> Unit,
     val getBuffer: () -> ByteArray,
-    val getRing: (Int, Int) -> List<Byte>,
     val getLineOfSight: (Int, Int, (Byte) -> Boolean) -> List<Byte>,
     val height: Int,
     val width: Int,
@@ -349,21 +348,6 @@ fun prepareBytes(aBuffer: ByteArray): DoubleBuffer {
     }
     val flip = { readBufferA = !readBufferA }
     val getBuffer = { if (readBufferA) aBuffer else bBuffer }
-    val getRing = { row: Int, col: Int ->
-        val buf = if (readBufferA) aBuffer else bBuffer
-        val left = maxOf(col - 1, 0)
-        val right = minOf(col + 1, width - 1)
-        val top = maxOf(row - 1, 0)
-        val bottom = minOf(row + 1, height - 1)
-        (top..bottom).flatMap { r ->
-            (left..right).mapNotNull { c ->
-                if (row == r && col == c) null else buf[rowColToIndex(
-                    r,
-                    c
-                )]
-            }
-        }
-    }
     val getLineOfSight = { row: Int, col: Int, f: (Byte) -> Boolean ->
         val inBounds = { r: Int, c: Int -> r >= 0 && c >= 0 && r < height && c < width }
         val buf = if (readBufferA) aBuffer else bBuffer
@@ -386,51 +370,25 @@ fun prepareBytes(aBuffer: ByteArray): DoubleBuffer {
         }
         ret
     }
-    return DoubleBuffer(get, set, flip, getBuffer, getRing, getLineOfSight, height, width)
+    return DoubleBuffer(get, set, flip, getBuffer, getLineOfSight, height, width)
 }
 
-fun problem11a(): Int {
+fun problem11(partA: Boolean): Int {
     val buffer = prepareBytes(getResourceAsBytes("11.txt"))
+    val occupiedThreshold = if (partA) 4 else 5
+    val predicate = if (partA) ({ true }) else ({ b: Byte -> b != '.'.toByte() })
     while (true) {
         var changed = false
         for (row in 0 until buffer.height) {
             for (col in 0 until buffer.width) {
                 val seat = buffer.get(row, col)
                 if (seat != '.'.toByte()) {
-                    val ring = buffer.getRing(row, col)
+                    val ring = buffer.getLineOfSight(row, col, predicate)
                     val occupied = ring.count { it == '#'.toByte() }
                     if (seat == 'L'.toByte() && occupied == 0) {
                         buffer.set(row, col, '#'.toByte())
                         changed = true
-                    } else if (seat == '#'.toByte() && occupied >= 4) {
-                        buffer.set(row, col, 'L'.toByte())
-                        changed = true
-                    } else {
-                        buffer.set(row, col, seat)
-                    }
-                }
-            }
-        }
-        buffer.flip() // all done reading from one buffer and writing to the other: flip which one is readable
-        if (!changed) break
-    }
-    return buffer.getBuffer().count { it == '#'.toByte() }
-}
-
-fun problem11b(): Int {
-    val buffer = prepareBytes(getResourceAsBytes("11.txt"))
-    while (true) {
-        var changed = false
-        for (row in 0 until buffer.height) {
-            for (col in 0 until buffer.width) {
-                val seat = buffer.get(row, col)
-                if (seat != '.'.toByte()) {
-                    val ring = buffer.getLineOfSight(row, col) { b -> b != '.'.toByte() }
-                    val occupied = ring.count { it == '#'.toByte() }
-                    if (seat == 'L'.toByte() && occupied == 0) {
-                        buffer.set(row, col, '#'.toByte())
-                        changed = true
-                    } else if (seat == '#'.toByte() && occupied >= 5) {
+                    } else if (seat == '#'.toByte() && occupied >= occupiedThreshold) {
                         buffer.set(row, col, 'L'.toByte())
                         changed = true
                     } else {
@@ -466,6 +424,6 @@ fun main(args: Array<String>) {
     println("Problem 9b: ${problem9b()}")
     println("Problem 10a: ${problem10a()}")
     println("Problem 10b: ${problem10b()}")
-    println("Problem 11a: ${problem11a()}")
-    println("Problem 11b: ${problem11b()}")
+    println("Problem 11a: ${problem11(true)}")
+    println("Problem 11b: ${problem11(false)}")
 }
