@@ -274,6 +274,7 @@ fun problem8b(): Int {
 // 2: windowed returns a List of Lists? No Sequence? Is that inefficient?
 // Question: is List.asSequence() expensive?
 // Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there. Similarly `if(m.containsKey(idx)) return m[idx]!!`
+// ^^ But --- wait https://kotlinlang.org/docs/basic-syntax.html#nullable-values-and-null-checks `x and y are automatically cast to non-nullable after null check`
 // subList does bound-checking. I miss python lst[5:1000000] would just work
 
 fun problem9a(numbers: Sequence<Long> = getResourceAsLongs("9.txt")): Long {
@@ -499,6 +500,23 @@ fun prob12b(): Int {
     return kotlin.math.abs(x) + kotlin.math.abs(y)
 }
 
+fun prob13(): Int {
+    val lines = getResourceAsText("13.txt").lines()
+    val earliest = lines[0].toInt()
+    val busses = lines[1].split(',').filter { it!="x" } .map{it.toInt()}
+    // Can we write the following loop using sequences?
+    // `generateSequence(earliest) {it+1  }.first{ time -> busses.any { bus -> (time % bus) == 0 }}!!` but without
+    // having to redo the last mod checks?
+    var t = earliest
+    while (true) {
+        val bus = busses.find { t % it == 0 }
+        if(bus!=null) {
+            return bus * (t-earliest)
+        }
+        t++
+    }
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -524,4 +542,5 @@ fun main(args: Array<String>) {
 //    println("Problem 11b: ${problem11(false)}")
     println("Problem 12: ${prob12()}")
     println("Problem 12b: ${prob12b()}")
+    println("Problem 13: ${prob13()}")
 }
