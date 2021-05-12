@@ -487,7 +487,7 @@ fun prob12b(): Int {
             'W' -> dx -= arg
             'E' -> dx += arg
             'L', 'R' -> {
-                val (x1, y1) = rotate(dx, dy, if (instruction=='L') arg else -arg) // L: clockwise
+                val (x1, y1) = rotate(dx, dy, if (instruction == 'L') arg else -arg) // L: clockwise
                 dx = x1
                 dy = y1
             }
@@ -503,18 +503,61 @@ fun prob12b(): Int {
 fun prob13(): Int {
     val lines = getResourceAsText("13.txt").lines()
     val earliest = lines[0].toInt()
-    val busses = lines[1].split(',').filter { it!="x" } .map{it.toInt()}
+    val busses = lines[1].split(',').filter { it != "x" }.map { it.toInt() }
     // Can we write the following loop using sequences?
     // `generateSequence(earliest) {it+1  }.first{ time -> busses.any { bus -> (time % bus) == 0 }}!!` but without
     // having to redo the last mod checks?
     var t = earliest
     while (true) {
         val bus = busses.find { t % it == 0 }
-        if(bus!=null) {
-            return bus * (t-earliest)
+        if (bus != null) {
+            return bus * (t - earliest)
         }
         t++
     }
+}
+
+// Find x such that `x % a.component2() == a.component1()` AND `x % b.component2() == b.component1()`
+// That is, the first element of each pair is congruent to x modulo the second element of the pair
+// Step one of the sieve algorithm per https://en.wikipedia.org/wiki/Chinese_remainder_theorem#Computation,i
+fun chineseRemainderTheoremPair(a: Pair<Long, Long>, b: Pair<Long, Long>): Long {
+    var congruence: Long = a.component1()
+    val mod = a.component2()
+    val secondCongruence = b.component1()
+    val secondMod = b.component2()
+    assert(congruence > 0 && mod > 0 && secondCongruence>0&&secondMod>0) { "positive only" }
+    while (true) {
+        if ((congruence % secondMod) == secondCongruence) return congruence
+        congruence += mod
+    }
+}
+
+fun prob13b(): Long {
+    val list = getResourceAsText("13.txt").lines()[1].split(',')
+    val equivalences = list
+        .mapIndexedNotNull { i, stringModulo ->
+            when (stringModulo) {
+                "x" -> null
+                else -> {
+                    val mod = stringModulo.toLong()
+                    val push = (list.size / mod + 1) * mod
+                    // push the modulo to be greater than the biggest index i
+                    // without this, we might end up with `mod - i % mod` being negative when index is big enough
+                    Pair((push - i.toLong()) % mod, mod)
+                }
+            }
+        }
+        .sortedByDescending { (_, n) -> n }
+    // x = equivalences[0][0] % equivalences[0][1] = equivalences[1][0] % equivalences[1][1] = ...
+    // In other words, the first element is congruent with x modulo the second element.
+    // In the language of https://en.wikipedia.org/wiki/Chinese_remainder_theorem#Computation,
+    // equivalences[i] = Pair(a_i, n_i)
+
+    val sol = equivalences.reduce { acc, pair ->
+        val newCongruent = chineseRemainderTheoremPair(acc, pair)
+        Pair(newCongruent, acc.component2() * pair.component2())
+    }
+    return sol.component1()
 }
 
 fun main(args: Array<String>) {
@@ -543,4 +586,5 @@ fun main(args: Array<String>) {
     println("Problem 12: ${prob12()}")
     println("Problem 12b: ${prob12b()}")
     println("Problem 13: ${prob13()}")
+    println("Problem 13b: ${prob13b()}")
 }
