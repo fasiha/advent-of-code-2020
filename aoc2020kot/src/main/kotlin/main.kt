@@ -1,3 +1,8 @@
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
+
 // From https://stackoverflow.com/a/53018129
 fun getResourceAsText(path: String): String {
     return object {}.javaClass.getResource(path)?.readText() ?: throw Exception("Unable to read file")
@@ -459,6 +464,41 @@ fun prob12(): Int {
     return kotlin.math.abs(x) + kotlin.math.abs(y)
 }
 
+// See https://mathworld.wolfram.com/RotationMatrix.html
+fun rotate(x: Int, y: Int, deg: Int): Pair<Int, Int> {
+    val t = PI / 180.0 * deg;
+    val cosT = cos(t)
+    val sinT = sin(t)
+    return Pair((cosT * x - sinT * y).roundToInt(), (sinT * x + cosT * y).roundToInt())
+}
+
+fun prob12b(): Int {
+    var x = 0
+    var y = 0
+    var dx = 10 // waypoint
+    var dy = 1 // waypoint
+    for (line in bytesToLinesSequence(getResourceAsBytes("12.txt"))) {
+        val instruction = line[0].toChar()
+        val arg = String(line.sliceArray(1 until line.size), Charsets.US_ASCII).toInt()
+        when (instruction) {
+            'N' -> dy += arg
+            'S' -> dy -= arg
+            'W' -> dx -= arg
+            'E' -> dx += arg
+            'L', 'R' -> {
+                val (x1, y1) = rotate(dx, dy, if (instruction=='L') arg else -arg) // L: clockwise
+                dx = x1
+                dy = y1
+            }
+            'F' -> {
+                x += dx * arg
+                y += dy * arg
+            }
+        }
+    }
+    return kotlin.math.abs(x) + kotlin.math.abs(y)
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -482,5 +522,6 @@ fun main(args: Array<String>) {
     println("Problem 10b: ${problem10b()}")
 //    println("Problem 11a: ${problem11(true)}")
 //    println("Problem 11b: ${problem11(false)}")
-    println("Problem 12a: ${prob12()}")
+    println("Problem 12: ${prob12()}")
+    println("Problem 12b: ${prob12b()}")
 }
