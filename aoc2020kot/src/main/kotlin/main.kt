@@ -276,6 +276,7 @@ fun problem8b(): Int {
 // Definitely annoying: `if(x != null) return x.max()` doesn't work: Kotlin doesn't know x is non-null there. Similarly `if(m.containsKey(idx)) return m[idx]!!`
 // ^^ But --- wait https://kotlinlang.org/docs/basic-syntax.html#nullable-values-and-null-checks `x and y are automatically cast to non-nullable after null check`
 // subList does bound-checking. I miss python lst[5:1000000] would just work
+// Why does "asd".toCharArray().mapNotNull not exist?
 
 fun problem9a(numbers: Sequence<Long> = getResourceAsLongs("9.txt")): Long {
     val preamble = 25
@@ -525,7 +526,7 @@ fun chineseRemainderTheoremPair(a: Pair<Long, Long>, b: Pair<Long, Long>): Long 
     val mod = a.component2()
     val secondCongruence = b.component1()
     val secondMod = b.component2()
-    assert(congruence > 0 && mod > 0 && secondCongruence>0&&secondMod>0) { "positive only" }
+    assert(congruence > 0 && mod > 0 && secondCongruence > 0 && secondMod > 0) { "positive only" }
     while (true) {
         if ((congruence % secondMod) == secondCongruence) return congruence
         congruence += mod
@@ -560,6 +561,30 @@ fun prob13b(): Long {
     return sol.component1()
 }
 
+fun prob14(): Long {
+    // Pair(1 mask (or), 0 mask (and))
+    fun stringToMasks(s: String): Pair<Long, Long> {
+        return s.toCharArray().foldIndexed(Pair(0L, 0L)) { idx, acc, x ->
+            val bit = 1L shl (s.length - idx - 1)
+            Pair(acc.component1() + if (x == '1') bit else 0, acc.component2() + if (x == '0') 0 else bit)
+        }
+    }
+
+    val mem = mutableMapOf<Int, Long>()
+    var mask = Pair(0L, 0L)
+    for (line in getResourceAsText("14.txt").trim().lineSequence()) {
+        if (line.startsWith("ma")) {
+            mask = stringToMasks(line.drop(7))
+        } else {
+            val group = "mem\\[(?<idx>[0-9]+)\\] = (?<value>.*)".toRegex().find(line)!!.groupValues
+            val idx = group[1].toInt()
+            val value = group[2].toLong()
+            mem[idx] = (value or mask.component1()) and mask.component2()
+        }
+    }
+    return mem.values.sum()
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -587,4 +612,5 @@ fun main(args: Array<String>) {
     println("Problem 12b: ${prob12b()}")
     println("Problem 13: ${prob13()}")
     println("Problem 13b: ${prob13b()}")
+    println("Problem 14: ${prob14()}")
 }
