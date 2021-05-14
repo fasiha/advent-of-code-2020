@@ -562,11 +562,14 @@ fun prob13b(): Long {
 }
 
 fun prob14(): Long {
-    // Pair(1 mask (or), 0 mask (and))
+    // Pair(OrMask (1s), AndMask (0s))
+    // OrMask's binary representation has 1s wherever the bitmask has a '1' character and 0s otherwise
+    // AndMask in binary has 0s wherever the bitmask is '0' but 1s otherwise
+    // This way, `foo OR OrMask AND AndMask` will apply the overall mask.
     fun stringToMasks(s: String): Pair<Long, Long> {
-        return s.toCharArray().foldIndexed(Pair(0L, 0L)) { idx, acc, x ->
+        return s.toCharArray().foldIndexed(Pair(0L, 0L)) { idx, (orMask, andMask), x ->
             val bit = 1L shl (s.length - idx - 1)
-            Pair(acc.component1() + if (x == '1') bit else 0, acc.component2() + if (x == '0') 0 else bit)
+            Pair(orMask + if (x == '1') bit else 0, andMask + if (x == '0') 0 else bit)
         }
     }
 
