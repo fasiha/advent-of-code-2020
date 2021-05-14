@@ -588,6 +588,76 @@ fun prob14(): Long {
     return mem.values.sum()
 }
 
+/**
+ * Given a list of numbers representing how many options each dimension has,
+ * generates a sequence whose each step is a list of numbers representing
+ * the chosen index for each dimension.
+ *
+ * If you're choosing between 4 shirts, 5 pants, and 3 pairs of shoes,
+ * `cartesianProduct(listOf(4, 5, 3))` will start at `(0, 0, 0)` and end at
+ * `(3, 4, 2)` and will enumerate each option.
+ *
+ * from https://github.com/fasiha/cartesian-product-generator/issues/3
+ */
+fun cartesianProduct(lengthArr: List<Int>): Sequence<List<Int>> {
+    val idx = lengthArr.map { 0 }.toMutableList()
+    var carry = 0
+    return sequence<List<Int>> {
+        while (carry == 0) {
+            yield(idx)
+            carry = 1
+            for (i in idx.indices) {
+                idx[i] += carry
+                if (idx[i] >= lengthArr[i]) {
+                    idx[i] = 0
+                    carry = 1
+                } else {
+                    carry = 0
+                    break
+                }
+            }
+        }
+    }
+}
+
+fun prob14b(): Long {
+    // We now have three things to generate from each mask string:
+    // - an OrMask whose binary has 1s where the input char is 1
+    // - an AndMask whose binary has 0s when the input char is X, since we want to zero out the floats
+    // - a floats list consisting of 2**index for each index whose character was X
+    fun stringToMasks(s: String): Triple<Long, Long, List<Long>> {
+        return s.toCharArray().foldIndexed(Triple(0L, 0L, listOf())) { idx, (orMask, andMask, floats), x ->
+            val bit = 1L shl (s.length - idx - 1)
+            Triple(
+                orMask + if (x == '1') bit else 0,
+                andMask + if (x == 'X') 0 else bit,
+                if (x == 'X') floats + bit else floats
+            )
+        }
+    }
+
+    val mem = mutableMapOf<Long, Long>()
+    var mask = Triple(0L, 0L, listOf<Long>())
+    for (line in getResourceAsText("14.txt").trim().lineSequence()) {
+        if (line.startsWith("ma")) {
+            mask = stringToMasks(line.drop(7))
+        } else {
+            val (orMask, andMask, floatMask) = mask
+            val group = "mem\\[(?<idx>[0-9]+)\\] = (?<value>.*)".toRegex().find(line)!!.groupValues
+            val value = group[2].toLong()
+            val idx = group[1].toLong()
+            val newIdx = (idx or orMask) and andMask
+            for (float in cartesianProduct(floatMask.map { 2 })) {
+                // each element of float will be 0 or 1, whether to turn the floating bit on or off
+                val floatIdx = newIdx + float.zip(floatMask).sumOf { (use, bit) -> use * bit }
+                // we're using multiplication as a shortcut to `if(use>0) bit else 0`
+                mem[floatIdx] = value
+            }
+        }
+    }
+    return mem.values.sum()
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -616,4 +686,5 @@ fun main(args: Array<String>) {
     println("Problem 13: ${prob13()}")
     println("Problem 13b: ${prob13b()}")
     println("Problem 14: ${prob14()}")
+    println("Problem 14b: ${prob14b()}")
 }
