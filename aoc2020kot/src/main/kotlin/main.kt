@@ -658,6 +658,29 @@ fun prob14b(): Long {
     return mem.values.sum()
 }
 
+fun prob15(partA: Boolean): Int {
+    val input = listOf(0, 5, 4, 1, 10, 14, 7)
+    val spoken = input.withIndex().associate { it.value to listOf(it.index + 1) }.toMutableMap()
+    var lastSpoken = input.last()
+    for (turn in input.size + 1..(if (partA) 2020 else 30_000_000)) {
+        val prev = spoken[lastSpoken]!!
+        lastSpoken = if (prev.size == 1) {
+            0
+        } else {
+            // prev is list of 2
+            prev[1] - prev[0]
+        }
+
+        if (!spoken.containsKey(lastSpoken)) {
+            spoken[lastSpoken] = listOf(turn)
+        } else {
+            val newPrevious = spoken[lastSpoken]!!
+            spoken[lastSpoken] = listOf(newPrevious.last(), turn)
+        }
+    }
+    return lastSpoken
+}
+
 fun main(args: Array<String>) {
     println("Problem 1a: ${problem1a()}")
     println("Problem 1b: ${problem1b()}")
@@ -687,4 +710,6 @@ fun main(args: Array<String>) {
     println("Problem 13b: ${prob13b()}")
     println("Problem 14: ${prob14()}")
     println("Problem 14b: ${prob14b()}")
+    println("Problem 15: ${prob15(true)}")
+//    println("Problem 15b: ${prob15(false)}")
 }
